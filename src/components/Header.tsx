@@ -8,6 +8,7 @@ export default function Header() {
     dashboard: 'Дашборд',
     sources: 'Источники',
     feed: 'Лента публикаций',
+    'ai-rewrite': 'AI Рерайт',
     moderation: 'Модерация',
     templates: 'Шаблоны',
     scheduler: 'Планировщик',

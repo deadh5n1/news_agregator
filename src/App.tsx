@@ -10,6 +10,7 @@ import Scheduler from './pages/Scheduler';
 import Queue from './pages/Queue';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
+import AIRewrite from './pages/AIRewrite';
 import { X, CheckCircle, AlertCircle, Info } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -55,6 +56,7 @@ function PageContent() {
     case 'scheduler': return <Scheduler />;
     case 'queue': return <Queue />;
     case 'analytics': return <Analytics />;
+    case 'ai-rewrite': return <AIRewrite />;
     case 'settings': return <Settings />;
     default: return <Dashboard />;
   }
