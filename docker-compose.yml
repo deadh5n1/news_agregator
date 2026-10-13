@@ -1,0 +1,113 @@
+version: '3.8'
+
+services:
+  # Frontend (React + Vite)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - maxnews-network
+    restart: unless-stopped
+
+  # Backend (NestJS)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://maxnews:maxnews_secret@postgres:5432/maxnews
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+      - MAXSTAT_API_KEY=${MAXSTAT_API_KEY:-}
+      - MAXSTAT_API_URL=https://api.maxstat.ru/v1
+      - MAX_BOT_TOKEN=${MAX_BOT_TOKEN:-}
+      - MAX_CHANNEL_ID=${MAX_CHANNEL_ID:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - maxnews-network
+    restart: unless-stopped
+
+  # PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=maxnews
+      - POSTGRES_PASSWORD=maxnews_secret
+      - POSTGRES_DB=maxnews
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U maxnews"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - maxnews-network
+    restart: unless-stopped
+
+  # Redis (для BullMQ)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - maxnews-network
+    restart: unless-stopped
+
+  # Redis Commander (опционально, для просмотра Redis)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - maxnews-network
+    profiles:
+      - tools
+
+  # Adminer (опционально, для просмотра PostgreSQL)
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8082:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - maxnews-network
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  maxnews-network:
+    driver: bridge
