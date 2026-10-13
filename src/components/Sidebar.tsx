@@ -10,12 +10,13 @@ const menuItems = [
   { id: 'sources', label: 'Источники', icon: Radio },
   { id: 'feed', label: 'Лента постов', icon: Newspaper },
   { id: 'ai-rewrite', label: 'AI Рерайт', icon: Sparkles },
+  { id: 'ai-settings', label: 'Настройки AI', icon: Settings },
   { id: 'moderation', label: 'Модерация', icon: CheckSquare },
   { id: 'templates', label: 'Шаблоны', icon: FileEdit },
   { id: 'scheduler', label: 'Планировщик', icon: Calendar },
   { id: 'queue', label: 'Очередь', icon: Clock },
   { id: 'analytics', label: 'Аналитика', icon: BarChart3 },
-  { id: 'settings', label: 'Настройки', icon: Settings },
+  { id: 'settings', label: 'Общие настройки', icon: Settings },
 ];
 
 export default function Sidebar() {

@@ -11,6 +11,7 @@ import Queue from './pages/Queue';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import AIRewrite from './pages/AIRewrite';
+import AISettings from './pages/AISettings';
 import { X, CheckCircle, AlertCircle, Info } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -57,6 +58,7 @@ function PageContent() {
     case 'queue': return <Queue />;
     case 'analytics': return <Analytics />;
     case 'ai-rewrite': return <AIRewrite />;
+    case 'ai-settings': return <AISettings />;
     case 'settings': return <Settings />;
     default: return <Dashboard />;
   }
