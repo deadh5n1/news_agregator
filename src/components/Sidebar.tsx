@@ -1,7 +1,7 @@
 import { useAppStore } from '../store/useAppStore';
 import {
   LayoutDashboard, Radio, Newspaper, FileEdit, CheckSquare,
-  Calendar, Clock, BarChart3, Settings, ChevronLeft, ChevronRight, Zap
+  Calendar, Clock, BarChart3, Settings, ChevronLeft, ChevronRight, Zap, Sparkles
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -9,6 +9,7 @@ const menuItems = [
   { id: 'dashboard', label: 'Дашборд', icon: LayoutDashboard },
   { id: 'sources', label: 'Источники', icon: Radio },
   { id: 'feed', label: 'Лента постов', icon: Newspaper },
+  { id: 'ai-rewrite', label: 'AI Рерайт', icon: Sparkles },
   { id: 'moderation', label: 'Модерация', icon: CheckSquare },
   { id: 'templates', label: 'Шаблоны', icon: FileEdit },
   { id: 'scheduler', label: 'Планировщик', icon: Calendar },
