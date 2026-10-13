@@ -8,7 +8,8 @@ const timeSlots = ['09:00', '11:00', '13:00', '15:00', '18:00', '20:00'];
 export default function Scheduler() {
   const { schedules, preparedPublications, setNotification } = useAppStore();
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('list');
-  const [selectedDate, setSelectedDate] = useState('2026-01-15');
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
   const getPrepared = (id: string) => preparedPublications.find(p => p.id === id);
 
@@ -119,27 +120,53 @@ export default function Scheduler() {
         /* Calendar View */
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-800">Январь 2026</h3>
-            <div className="flex gap-1">
-              {['13', '14', '15', '16', '17'].map(day => (
+            <button
+              onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}
+              className="p-2 hover:bg-gray-100 rounded-lg"
+            >
+              ←
+            </button>
+            <h3 className="text-sm font-semibold text-gray-800">
+              {currentDate.toLocaleString('ru-RU', { month: 'long', year: 'numeric' })}
+            </h3>
+            <button
+              onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}
+              className="p-2 hover:bg-gray-100 rounded-lg"
+            >
+              →
+            </button>
+          </div>
+          
+          {/* Days of month */}
+          <div className="grid grid-cols-7 gap-1 mb-4">
+            {Array.from({ length: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate() }, (_, i) => i + 1).map(day => {
+              const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+              const hasScheduled = schedules.some(s => s.scheduledAt.startsWith(dateStr));
+              return (
                 <button
                   key={day}
-                  onClick={() => setSelectedDate(`2026-01-${day}`)}
+                  onClick={() => setSelectedDate(dateStr)}
                   className={clsx(
-                    'w-8 h-8 rounded-lg text-xs font-medium',
-                    selectedDate === `2026-01-${day}` ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+                    'h-10 rounded-lg text-xs font-medium relative',
+                    selectedDate === dateStr ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100',
+                    hasScheduled && 'ring-2 ring-blue-300'
                   )}
                 >
                   {day}
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
+
+          {/* Time slots for selected date */}
           <div className="space-y-2">
             {timeSlots.map(slot => {
-              const slotSchedule = schedules.find(s =>
-                new Date(s.scheduledAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) === slot
-              );
+              const slotSchedule = schedules.find(s => {
+                const schedDate = new Date(s.scheduledAt);
+                const schedDateStr = schedDate.toISOString().split('T')[0];
+                const schedTime = schedDate.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                return schedDateStr === selectedDate && schedTime === slot;
+              });
               const prepared = slotSchedule ? getPrepared(slotSchedule.preparedPublicationId) : null;
               return (
                 <div key={slot} className={clsx(

@@ -105,7 +105,21 @@ export default function AIRewrite() {
     setIsGenerating(true);
     setRewrittenText('');
 
-    // Имитация генерации
+    // ⚠️ ДЕМО-РЕЖИМ: В production подключите реальный API
+    // const response = await fetch('/api/ai/rewrite', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({
+    //     text: selected.bodyText,
+    //     provider: selectedModel,
+    //     style: selectedStyle,
+    //     options: { temperature, maxTokens, customPrompt }
+    //   })
+    // });
+    // const data = await response.json();
+    // setRewrittenText(data.rewrittenText);
+
+    // Временная имитация для демонстрации UI
     const mockResults: Record<AIModel, Record<RewriteStyle, string>> = {
       gpt4: {
         informative: `📱 ${selected.title}\n\n${selected.bodyText.slice(0, 200)}...\n\nКлючевые моменты:\n• Главное событие произошло сегодня\n• Эксперты уже оценили последствия\n• Рынок отреагировал позитивно\n\n#новости #технологии`,
@@ -411,6 +425,21 @@ export default function AIRewrite() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Demo Warning */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+        <div className="flex items-start gap-3">
+          <span className="text-2xl">⚠️</span>
+          <div>
+            <p className="text-sm font-semibold text-yellow-900">Демо-режим</p>
+            <p className="text-xs text-yellow-800 mt-1">
+              Сейчас используются заранее подготовленные примеры. Для работы с реальными AI моделями 
+              подключите backend API и настройте ключи в <code className="bg-yellow-100 px-1 rounded">.env</code>.
+              Результаты рерайта в демо-режиме НЕ содержат реальных данных от AI.
+            </p>
           </div>
         </div>
       </div>
