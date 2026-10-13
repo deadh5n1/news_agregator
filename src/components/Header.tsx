@@ -9,12 +9,13 @@ export default function Header() {
     sources: 'Источники',
     feed: 'Лента публикаций',
     'ai-rewrite': 'AI Рерайт',
+    'ai-settings': 'Настройки AI',
     moderation: 'Модерация',
     templates: 'Шаблоны',
     scheduler: 'Планировщик',
     queue: 'Очередь публикаций',
     analytics: 'Аналитика',
-    settings: 'Настройки',
+    settings: 'Общие настройки',
   };
 
   return (
