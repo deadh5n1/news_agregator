@@ -3,7 +3,7 @@ import { useAppStore } from '../store/useAppStore';
 import { Sparkles, RefreshCw, Copy, Check, ArrowRight, Settings2, Zap, Brain, MessageSquare } from 'lucide-react';
 import clsx from 'clsx';
 
-type AIModel = 'gpt4' | 'gpt35' | 'claude' | 'yandexgpt' | 'gigachat';
+type AIModel = 'gpt4' | 'gpt35' | 'claude' | 'yandexgpt' | 'gigachat' | 'deepseek' | 'openrouter';
 
 interface AIModelConfig {
   id: AIModel;
@@ -38,6 +38,22 @@ const aiModels: AIModelConfig[] = [
     icon: '🎭',
     color: 'from-purple-500 to-pink-600',
     maxTokens: 100000
+  },
+  {
+    id: 'deepseek',
+    name: 'DeepSeek V3',
+    description: 'Мощная и дешёвая альтернатива GPT-4',
+    icon: '🔮',
+    color: 'from-cyan-500 to-blue-600',
+    maxTokens: 64000
+  },
+  {
+    id: 'openrouter',
+    name: 'OpenRouter',
+    description: 'Доступ к 100+ моделям через один API',
+    icon: '🌐',
+    color: 'from-orange-500 to-red-600',
+    maxTokens: 128000
   },
   {
     id: 'yandexgpt',
@@ -89,7 +105,21 @@ export default function AIRewrite() {
     setIsGenerating(true);
     setRewrittenText('');
 
-    // Имитация генерации
+    // ⚠️ ДЕМО-РЕЖИМ: В production подключите реальный API
+    // const response = await fetch('/api/ai/rewrite', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({
+    //     text: selected.bodyText,
+    //     provider: selectedModel,
+    //     style: selectedStyle,
+    //     options: { temperature, maxTokens, customPrompt }
+    //   })
+    // });
+    // const data = await response.json();
+    // setRewrittenText(data.rewrittenText);
+
+    // Временная имитация для демонстрации UI
     const mockResults: Record<AIModel, Record<RewriteStyle, string>> = {
       gpt4: {
         informative: `📱 ${selected.title}\n\n${selected.bodyText.slice(0, 200)}...\n\nКлючевые моменты:\n• Главное событие произошло сегодня\n• Эксперты уже оценили последствия\n• Рынок отреагировал позитивно\n\n#новости #технологии`,
@@ -125,6 +155,20 @@ export default function AIRewrite() {
         analytical: `📈 ${selected.title}: бизнес-взгляд\n\n${selected.bodyText.slice(0, 175)}...\n\nБизнес-импликация:\n• Влияние на рынок\n• Возможности для компаний\n• Риски и вызовы\n\n#бизнес #аналитика`,
         casual: `Слушайте, ${selected.title.toLowerCase()}\n\n${selected.bodyText.slice(0, 145).toLowerCase()}...\n\nИнтересная штука, да? 😊\n\n#интересно`,
         professional: `Уважаемые партнёры,\n\nИнформируем о следующем событии: ${selected.title}\n\n${selected.bodyText.slice(0, 190)}...\n\nРекомендуем рассмотреть возможности сотрудничества.\n\n#партнёрство #бизнес`
+      },
+      deepseek: {
+        informative: `📋 ${selected.title}\n\n${selected.bodyText.slice(0, 200)}...\n\nОсновные тезисы:\n• Факты и цифры\n• Контекст события\n• Возможные последствия\n\nПодробности в первоисточнике.\n\n#новости #факты`,
+        engaging: `🌟 ${selected.title}\n\nТолько что стало известно!\n\n${selected.bodyText.slice(0, 150)}...\n\nЭто реально круто! 🔥\n\nЧто думаете? Пишите в комменты! 👇\n\n#тренды #новости`,
+        analytical: `📊 Разбор: ${selected.title}\n\n${selected.bodyText.slice(0, 180)}...\n\nАнализ ситуации:\n\n1. Предпосылки события\n2. Текущее состояние\n3. Прогноз развития\n\nКаждый пункт требует детального рассмотрения.\n\n#аналитика #разбор`,
+        casual: `Эй, ${selected.title.toLowerCase()}\n\n${selected.bodyText.slice(0, 140).toLowerCase()}...\n\nНу ничоси! 😮 Давайте обсудим?\n\n#новости #обсуждение`,
+        professional: `Коллеги,\n\n${selected.title}\n\n${selected.bodyText.slice(0, 200)}...\n\nРекомендуем ознакомиться и учесть в работе.\n\n#деловое #информация`
+      },
+      openrouter: {
+        informative: `📰 ${selected.title}\n\n${selected.bodyText.slice(0, 195)}...\n\nКлючевые факты:\n→ Событие\n→ Контекст\n→ Значение\n\n#новости #важно`,
+        engaging: `💥 ${selected.title}\n\nЭто просто WOW! 🤯\n\n${selected.bodyText.slice(0, 150)}...\n\nТакого ещё не было! Будем следить за развитием событий 👀\n\n#супер #тренды`,
+        analytical: `🔬 ${selected.title}: глубокий взгляд\n\n${selected.bodyText.slice(0, 175)}...\n\nМногоуровневый анализ:\n\n📌 Уровень 1: Факты\n📌 Уровень 2: Контекст\n📌 Уровень 3: Прогноз\n\n#глубокий_анализ #тренды`,
+        casual: `Слушай, ${selected.title.toLowerCase()}\n\n${selected.bodyText.slice(0, 145).toLowerCase()}...\n\nПрикинь? 😲 Ну и дела!\n\n#жиза #новости`,
+        professional: `Уважаемые коллеги,\n\nДоводим до вашего сведения:\n\n${selected.title}\n\n${selected.bodyText.slice(0, 190)}...\n\nС уважением,\nРедакция\n\n#деловое`
       }
     };
 
@@ -381,6 +425,21 @@ export default function AIRewrite() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Demo Warning */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+        <div className="flex items-start gap-3">
+          <span className="text-2xl">⚠️</span>
+          <div>
+            <p className="text-sm font-semibold text-yellow-900">Демо-режим</p>
+            <p className="text-xs text-yellow-800 mt-1">
+              Сейчас используются заранее подготовленные примеры. Для работы с реальными AI моделями 
+              подключите backend API и настройте ключи в <code className="bg-yellow-100 px-1 rounded">.env</code>.
+              Результаты рерайта в демо-режиме НЕ содержат реальных данных от AI.
+            </p>
           </div>
         </div>
       </div>

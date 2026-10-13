@@ -293,26 +293,29 @@ export default function Sources() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4">Импорт из CSV</h2>
+            
+            {/* Demo Warning */}
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+              <p className="text-xs text-yellow-800">
+                ⚠️ <strong>Демо-режим:</strong> Функция импорта CSV будет доступна после подключения backend API.
+              </p>
+            </div>
+
             <p className="text-sm text-gray-500 mb-4">
               Загрузите CSV-файл с колонками: name, url, external_id, priority, polling_interval
             </p>
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
+            <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center opacity-50 cursor-not-allowed">
               <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
               <p className="text-sm text-gray-600">Перетащите файл сюда или нажмите для выбора</p>
               <p className="text-xs text-gray-400 mt-1">CSV, до 1000 строк</p>
+              <p className="text-xs text-yellow-600 mt-2 font-medium">Недоступно в демо-режиме</p>
             </div>
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowImportModal(false)}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                Отмена
-              </button>
-              <button
-                onClick={() => { setShowImportModal(false); setNotification({ type: 'success', message: 'Импорт запущен' }); }}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
-              >
-                Импортировать
+                Закрыть
               </button>
             </div>
           </div>

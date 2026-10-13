@@ -14,6 +14,14 @@
 # .env
 OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-4-turbo-preview  # или gpt-3.5-turbo
+
+# DeepSeek
+DEEPSEEK_API_KEY=sk-...
+DEEPSEEK_MODEL=deepseek-chat  # или deepseek-reasoner
+
+# OpenRouter
+OPENROUTER_API_KEY=sk-or-...
+OPENROUTER_MODEL=anthropic/claude-3-sonnet
 ```
 
 **Пример интеграции (backend):**
@@ -219,6 +227,205 @@ async function rewriteWithGigaChat(text: string, style: string): Promise<string>
 
 ---
 
+### 5. DeepSeek
+
+**Получение API ключа:**
+1. Зарегистрируйтесь на https://platform.deepseek.com
+2. Перейдите в API Keys
+3. Создайте новый ключ
+
+**Особенности:**
+- Очень дешёвая альтернатива GPT-4 (в 10-20 раз дешевле)
+- Отличное качество для русского языка
+- Поддержка длинного контекста (до 64K токенов)
+- Модель DeepSeek-R1 с reasoning capabilities
+
+**Настройка:**
+```env
+# .env
+DEEPSEEK_API_KEY=sk-...
+DEEPSEEK_MODEL=deepseek-chat  # или deepseek-reasoner для R1
+```
+
+**Пример интеграции:**
+```typescript
+async function rewriteWithDeepSeek(text: string, style: string): Promise<string> {
+  const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
+      messages: [
+        {
+          role: 'system',
+          content: 'Ты — профессиональный редактор новостного канала. Перепиши новость в заданном стиле, сохранив все факты.'
+        },
+        {
+          role: 'user',
+          content: `Стиль: ${style}\n\nОригинальный текст:\n${text}\n\nДобавь эмодзи и хештеги.`
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 1000,
+      stream: false
+    })
+  });
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || '';
+}
+```
+
+**DeepSeek-R1 (Reasoning):**
+```typescript
+// Для сложных задач с рассуждениями
+async function rewriteWithDeepSeekR1(text: string, style: string): Promise<string> {
+  const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'deepseek-reasoner',
+      messages: [
+        {
+          role: 'system',
+          content: 'Проанализируй новость и перепиши её, объяснив логику выбора стиля.'
+        },
+        {
+          role: 'user',
+          content: `Стиль: ${style}\n\nТекст:\n${text}`
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 2000
+    })
+  });
+
+  const data = await response.json();
+  // R1 возвращает reasoning + content
+  return data.choices?.[0]?.message?.content || '';
+}
+```
+
+---
+
+### 6. OpenRouter
+
+**Получение API ключа:**
+1. Зарегистрируйтесь на https://openrouter.ai
+2. Перейдите в Keys
+3. Создайте новый ключ
+4. Пополните баланс (от $5)
+
+**Особенности:**
+- Единый API для доступа к 100+ моделям
+- Автоматический выбор лучшей модели
+- Поддержка fallback при ошибках
+- Прозрачное ценообразование
+
+**Доступные модели через OpenRouter:**
+- `openai/gpt-4-turbo`
+- `anthropic/claude-3-opus`
+- `google/gemini-pro`
+- `meta-llama/llama-3-70b`
+- `mistralai/mixtral-8x7b`
+- И многие другие...
+
+**Настройка:**
+```env
+# .env
+OPENROUTER_API_KEY=sk-or-...
+OPENROUTER_MODEL=anthropic/claude-3-sonnet  # или любая другая
+```
+
+**Пример интеграции:**
+```typescript
+async function rewriteWithOpenRouter(
+  text: string,
+  style: string,
+  model: string = 'anthropic/claude-3-sonnet'
+): Promise<string> {
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      'HTTP-Referer': 'https://maxnews.ru', // Ваш сайт
+      'X-Title': 'MaxNews AI Rewrite', // Название приложения
+    },
+    body: JSON.stringify({
+      model: model,
+      messages: [
+        {
+          role: 'system',
+          content: 'Ты — профессиональный редактор новостного канала. Перепиши новость в заданном стиле.'
+        },
+        {
+          role: 'user',
+          content: `Стиль: ${style}\n\nОригинальный текст:\n${text}\n\nДобавь эмодзи и хештеги.`
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 1000
+    })
+  });
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || '';
+}
+```
+
+**Использование разных моделей:**
+```typescript
+// Автоматический выбор модели по задаче
+async function smartRewrite(text: string, style: string): Promise<string> {
+  let model: string;
+  
+  if (style === 'analytical') {
+    model = 'anthropic/claude-3-opus'; // Лучший для анализа
+  } else if (style === 'casual') {
+    model = 'meta-llama/llama-3-70b'; // Хорош для разговорного
+  } else if (style === 'professional') {
+    model = 'openai/gpt-4-turbo'; // Отличный для делового
+  } else {
+    model = 'anthropic/claude-3-sonnet'; // Универсальный
+  }
+  
+  return rewriteWithOpenRouter(text, style, model);
+}
+```
+
+**Fallback стратегия:**
+```typescript
+async function rewriteWithFallback(text: string, style: string): Promise<string> {
+  const models = [
+    'anthropic/claude-3-sonnet',
+    'openai/gpt-4-turbo',
+    'google/gemini-pro',
+    'meta-llama/llama-3-70b'
+  ];
+  
+  for (const model of models) {
+    try {
+      const result = await rewriteWithOpenRouter(text, style, model);
+      if (result) return result;
+    } catch (error) {
+      console.log(`Model ${model} failed, trying next...`);
+      continue;
+    }
+  }
+  
+  throw new Error('All models failed');
+}
+```
+
+---
+
 ## Универсальный сервис рерайта
 
 ```typescript
@@ -226,7 +433,7 @@ async function rewriteWithGigaChat(text: string, style: string): Promise<string>
 
 import { Injectable } from '@nestjs/common';
 
-type AIProvider = 'openai' | 'anthropic' | 'yandex' | 'gigachat';
+type AIProvider = 'openai' | 'anthropic' | 'yandex' | 'gigachat' | 'deepseek' | 'openrouter';
 type RewriteStyle = 'informative' | 'engaging' | 'analytical' | 'casual' | 'professional';
 
 @Injectable()
@@ -239,6 +446,7 @@ export class AIRewriteService {
       temperature?: number;
       maxTokens?: number;
       customPrompt?: string;
+      model?: string; // Для OpenRouter
     }
   ): Promise<string> {
     switch (provider) {
@@ -250,6 +458,10 @@ export class AIRewriteService {
         return this.rewriteWithYandex(text, style, options);
       case 'gigachat':
         return this.rewriteWithGigaChat(text, style, options);
+      case 'deepseek':
+        return this.rewriteWithDeepSeek(text, style, options);
+      case 'openrouter':
+        return this.rewriteWithOpenRouter(text, style, options);
       default:
         throw new Error(`Unsupported provider: ${provider}`);
     }
@@ -289,6 +501,72 @@ export class AIRewriteService {
   ): Promise<string> {
     // Реализация для GigaChat
     // ...
+  }
+
+  private async rewriteWithDeepSeek(
+    text: string,
+    style: RewriteStyle,
+    options?: any
+  ): Promise<string> {
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
+        messages: [
+          {
+            role: 'system',
+            content: 'Ты — профессиональный редактор новостного канала. Перепиши новость в заданном стиле.'
+          },
+          {
+            role: 'user',
+            content: `Стиль: ${style}\n\nТекст:\n${text}`
+          }
+        ],
+        temperature: options?.temperature || 0.7,
+        max_tokens: options?.maxTokens || 1000
+      })
+    });
+
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || '';
+  }
+
+  private async rewriteWithOpenRouter(
+    text: string,
+    style: RewriteStyle,
+    options?: any
+  ): Promise<string> {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'HTTP-Referer': process.env.APP_URL || 'https://maxnews.ru',
+        'X-Title': 'MaxNews AI Rewrite',
+      },
+      body: JSON.stringify({
+        model: options?.model || process.env.OPENROUTER_MODEL || 'anthropic/claude-3-sonnet',
+        messages: [
+          {
+            role: 'system',
+            content: 'Ты — профессиональный редактор новостного канала. Перепиши новость в заданном стиле.'
+          },
+          {
+            role: 'user',
+            content: `Стиль: ${style}\n\nТекст:\n${text}`
+          }
+        ],
+        temperature: options?.temperature || 0.7,
+        max_tokens: options?.maxTokens || 1000
+      })
+    });
+
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || '';
   }
 }
 ```
@@ -468,5 +746,34 @@ describe('AIRewriteService', () => {
 
 - [OpenAI API Docs](https://platform.openai.com/docs/api-reference)
 - [Anthropic API Docs](https://docs.anthropic.com)
+- [DeepSeek API Docs](https://platform.deepseek.com/api-docs/)
+- [OpenRouter API Docs](https://openrouter.ai/docs)
 - [YandexGPT API](https://yandex.cloud/ru/docs/foundation-models/concepts/)
 - [GigaChat API](https://developers.sber.ru/docs/ru/gigachat/api/overview)
+
+## Сравнение моделей
+
+| Модель | Цена (1K токенов) | Качество | Скорость | Особенности |
+|--------|-------------------|----------|----------|-------------|
+| GPT-4 | $0.01 / $0.03 | ⭐⭐⭐⭐⭐ | Средняя | Лучшее качество |
+| GPT-3.5 | $0.0015 / $0.002 | ⭐⭐⭐ | Быстрая | Дешёвая |
+| Claude 3 Opus | $0.015 / $0.075 | ⭐⭐⭐⭐⭐ | Медленная | Отличный для анализа |
+| Claude 3 Sonnet | $0.003 / $0.015 | ⭐⭐⭐⭐ | Средняя | Баланс цена/качество |
+| **DeepSeek V3** | **$0.00014 / $0.00028** | ⭐⭐⭐⭐ | Быстрая | **Очень дешёвая!** |
+| **DeepSeek R1** | **$0.00055 / $0.00219** | ⭐⭐⭐⭐⭐ | Медленная | **Reasoning** |
+| **OpenRouter** | Зависит от модели | ⭐⭐⭐-⭐⭐⭐⭐⭐ | Зависит | **100+ моделей** |
+| YandexGPT | ₽0.04 / ₽0.06 | ⭐⭐⭐⭐ | Средняя | Русский контекст |
+| GigaChat | ₽0.06 / ₽0.08 | ⭐⭐⭐ | Быстрая | Бизнес |
+
+### Рекомендации по выбору:
+
+**Для экономии бюджета:**
+- DeepSeek V3 — в 100 раз дешевле GPT-4 при отличном качестве
+- GPT-3.5 — хорошая альтернатива для простых задач
+
+**Для максимального качества:**
+- GPT-4 или Claude 3 Opus — для важных публикаций
+- DeepSeek R1 — для аналитических текстов с reasoning
+
+**Для гибкости:**
+- OpenRouter — доступ ко всем моделям через один API с автоматическим fallback

@@ -1,0 +1,313 @@
+// Prisma schema for MaxNews
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  EDITOR
+  ADMIN
+}
+
+enum SourceStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+  ERROR
+  BANNED
+}
+
+enum SourcePriority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum ProcessingStatus {
+  PENDING
+  PROCESSING
+  PROCESSED
+  FAILED
+  DUPLICATE
+}
+
+enum PublicationStatus {
+  ACTIVE
+  HIDDEN
+  DELETED
+}
+
+enum PreparedStatus {
+  DRAFT
+  APPROVED
+  REJECTED
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+}
+
+enum ScheduleStatus {
+  QUEUED
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+}
+
+enum ModerationAction {
+  APPROVED
+  REJECTED
+  EDITED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         UserRole @default(USER)
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sources          Source[]
+  preparedPubs     PreparedPublication[]
+  moderationLogs   ModerationLog[]
+
+  @@map("users")
+}
+
+model Category {
+  id        String  @id @default(uuid())
+  name      String
+  slug      String  @unique
+  parentId  String?
+  parent    Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryHierarchy")
+  sources   Source[]
+
+  @@map("categories")
+}
+
+model Source {
+  id                String         @id @default(uuid())
+  externalId        String         @unique
+  name              String
+  url               String
+  avatarUrl         String?
+  description       String?
+  categoryId        String?
+  category          Category?      @relation(fields: [categoryId], references: [id])
+  language          String         @default("ru")
+  status            SourceStatus   @default(ACTIVE)
+  priority          SourcePriority @default(MEDIUM)
+  followersCount    Int            @default(0)
+  postsCount        Int            @default(0)
+  engagementRate    Float          @default(0)
+  growthRate        Float          @default(0)
+  pollingIntervalMin Int           @default(30)
+  lastPostAt        DateTime?
+  lastCheckedAt     DateTime?
+  addedById         String
+  addedBy           User           @relation(fields: [addedById], references: [id])
+  notes             String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  rawPublications   RawPublication[]
+  publications      Publication[]
+  preparedPubs      PreparedPublication[]
+  metricsHistory    SourceMetricsHistory[]
+
+  @@map("sources")
+}
+
+model SourceMetricsHistory {
+  id              String   @id @default(uuid())
+  sourceId        String
+  source          Source   @relation(fields: [sourceId], references: [id])
+  date            DateTime
+  followersCount  Int
+  postsCount      Int
+  engagementRate  Float
+  growthDelta     Float
+  createdAt       DateTime @default(now())
+
+  @@unique([sourceId, date])
+  @@map("source_metrics_history")
+}
+
+model RawPublication {
+  id                String           @id @default(uuid())
+  sourceId          String
+  source            Source           @relation(fields: [sourceId], references: [id])
+  externalPostId    String
+  rawPayload        Json
+  fetchedAt         DateTime         @default(now())
+  processingStatus  ProcessingStatus @default(PENDING)
+  errorMessage      String?
+  createdAt         DateTime         @default(now())
+
+  @@unique([sourceId, externalPostId])
+  @@map("raw_publications")
+}
+
+model Publication {
+  id              String           @id @default(uuid())
+  sourceId        String
+  source          Source           @relation(fields: [sourceId], references: [id])
+  externalPostId  String
+  title           String
+  bodyText        String
+  summary         String
+  url             String?
+  publishedAt     DateTime
+  collectedAt     DateTime         @default(now())
+  contentHash     String
+  simHash         String?
+  viewCount       Int              @default(0)
+  likeCount       Int              @default(0)
+  commentCount    Int              @default(0)
+  shareCount      Int              @default(0)
+  category        String?
+  tags            String[]
+  importanceScore Float            @default(0)
+  status          PublicationStatus @default(ACTIVE)
+  media           Json?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  preparedPub     PreparedPublication?
+  analytics       PublicationAnalytics?
+
+  @@unique([sourceId, externalPostId])
+  @@map("publications")
+}
+
+model PreparedPublication {
+  id                    String         @id @default(uuid())
+  originalPublicationId String         @unique
+  originalPublication   Publication    @relation(fields: [originalPublicationId], references: [id])
+  sourceId              String
+  source                Source         @relation(fields: [sourceId], references: [id])
+  adaptedText           String
+  title                 String
+  media                 Json?
+  templateId            String?
+  template              PublicationTemplate? @relation(fields: [templateId], references: [id])
+  customHashtags        String[]
+  ctaText               String?
+  status                PreparedStatus @default(DRAFT)
+  moderatorId           String?
+  moderator             User?          @relation(fields: [moderatorId], references: [id])
+  moderationComment     String?
+  aiProvider            String?
+  aiModel               String?
+  aiRewriteLog          Json?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  schedule              PublicationSchedule?
+  moderationLogs        ModerationLog[]
+
+  @@map("prepared_publications")
+}
+
+model PublicationTemplate {
+  id        String   @id @default(uuid())
+  name      String
+  structure String
+  example   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  preparedPubs PreparedPublication[]
+
+  @@map("publication_templates")
+}
+
+model PublicationSchedule {
+  id                    String        @id @default(uuid())
+  preparedPublicationId String        @unique
+  preparedPublication   PreparedPublication @relation(fields: [preparedPublicationId], references: [id])
+  scheduledAt           DateTime
+  status                ScheduleStatus @default(QUEUED)
+  retryCount            Int           @default(0)
+  publishedAt           DateTime?
+  errorMessage          String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@index([scheduledAt, status])
+  @@map("publication_schedule")
+}
+
+model PublicationAnalytics {
+  id              String   @id @default(uuid())
+  publicationId   String   @unique
+  publication     Publication @relation(fields: [publicationId], references: [id])
+  publishedAt     DateTime
+  views           Int      @default(0)
+  likes           Int      @default(0)
+  comments        Int      @default(0)
+  shares          Int      @default(0)
+  reach           Int      @default(0)
+  engagementRate  Float    @default(0)
+  updatedAt       DateTime @updatedAt
+
+  @@map("publication_analytics")
+}
+
+model ModerationLog {
+  id              String          @id @default(uuid())
+  publicationId   String
+  publication     PreparedPublication @relation(fields: [publicationId], references: [id])
+  moderatorId     String
+  moderator       User            @relation(fields: [moderatorId], references: [id])
+  action          ModerationAction
+  comment         String?
+  previousStatus  PreparedStatus?
+  newStatus       PreparedStatus?
+  createdAt       DateTime        @default(now())
+
+  @@map("moderation_logs")
+}
+
+model AIUsage {
+  id          String   @id @default(uuid())
+  userId      String
+  provider    String
+  model       String
+  inputTokens Int
+  outputTokens Int
+  cost        Float
+  latency     Int
+  success     Boolean
+  errorMessage String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([provider, model])
+  @@map("ai_usage")
+}
+
+model OperationLog {
+  id          String   @id @default(uuid())
+  entityType  String
+  entityId    String
+  action      String
+  userId      String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("operation_logs")
+}

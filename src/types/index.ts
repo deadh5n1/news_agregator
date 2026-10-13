@@ -3,7 +3,7 @@ export type SourceStatus = 'ACTIVE' | 'PAUSED' | 'ARCHIVED' | 'ERROR' | 'BANNED'
 export type SourcePriority = 'HIGH' | 'MEDIUM' | 'LOW';
 export type ProcessingStatus = 'PENDING' | 'PROCESSING' | 'PROCESSED' | 'FAILED' | 'DUPLICATE';
 export type PublicationStatus = 'ACTIVE' | 'HIDDEN' | 'DELETED';
-export type PreparedStatus = 'DRAFT' | 'APPROVED' | 'REJECTED' | 'SCHEDULED' | 'PUBLISHED';
+export type PreparedStatus = 'DRAFT' | 'APPROVED' | 'REJECTED' | 'SCHEDULED' | 'PUBLISHING' | 'PUBLISHED' | 'FAILED';
 export type ScheduleStatus = 'QUEUED' | 'SCHEDULED' | 'PUBLISHING' | 'PUBLISHED' | 'FAILED';
 export type ModerationAction = 'APPROVED' | 'REJECTED' | 'EDITED';
 

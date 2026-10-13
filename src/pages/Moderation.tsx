@@ -41,7 +41,9 @@ export default function Moderation() {
 
   const handleSchedule = () => {
     if (selectedPub && scheduleDate) {
-      schedulePublication(selectedPub, `${scheduleDate}T${scheduleTime}:00Z`);
+      // Convert local time to UTC properly
+      const localDateTime = new Date(`${scheduleDate}T${scheduleTime}:00`);
+      schedulePublication(selectedPub, localDateTime);
       setShowScheduleModal(false);
       setNotification({ type: 'success', message: 'Публикация запланирована' });
     }

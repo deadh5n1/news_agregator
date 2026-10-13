@@ -23,13 +23,17 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://maxnews:maxnews_secret@postgres:5432/maxnews
-      - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
-      - MAXSTAT_API_KEY=${MAXSTAT_API_KEY:-}
-      - MAXSTAT_API_URL=https://api.maxstat.ru/v1
-      - MAX_BOT_TOKEN=${MAX_BOT_TOKEN:-}
-      - MAX_CHANNEL_ID=${MAX_CHANNEL_ID:-}
+      - DATABASE_URL=${DATABASE_URL:?DATABASE_URL is required}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
+      - MAXSTAT_API_KEY=${MAXSTAT_API_KEY:?MAXSTAT_API_KEY is required}
+      - MAXSTAT_API_URL=${MAXSTAT_API_URL:-https://api.maxstat.ru/v1}
+      - MAX_BOT_TOKEN=${MAX_BOT_TOKEN:?MAX_BOT_TOKEN is required}
+      - MAX_CHANNEL_ID=${MAX_CHANNEL_ID:?MAX_CHANNEL_ID is required}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
     depends_on:
       postgres:
         condition: service_healthy
