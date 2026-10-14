@@ -9,7 +9,8 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - maxnews-network
     restart: unless-stopped
@@ -30,10 +31,13 @@ services:
       - MAXSTAT_API_URL=${MAXSTAT_API_URL:-https://api.maxstat.ru/v1}
       - MAX_BOT_TOKEN=${MAX_BOT_TOKEN:?MAX_BOT_TOKEN is required}
       - MAX_CHANNEL_ID=${MAX_CHANNEL_ID:?MAX_CHANNEL_ID is required}
+      # AI провайдеры (опционально)
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - YANDEX_IAM_TOKEN=${YANDEX_IAM_TOKEN:-}
+      - YANDEX_FOLDER_ID=${YANDEX_FOLDER_ID:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -46,16 +50,17 @@ services:
   # PostgreSQL
   postgres:
     image: postgres:16-alpine
-    ports:
-      - "5432:5432"
+    # НЕ публикуем порт наружу для безопасности
+    # ports:
+    #   - "5432:5432"
     environment:
-      - POSTGRES_USER=maxnews
-      - POSTGRES_PASSWORD=maxnews_secret
-      - POSTGRES_DB=maxnews
+      - POSTGRES_USER=${POSTGRES_USER:-maxnews}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      - POSTGRES_DB=${POSTGRES_DB:-maxnews}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U maxnews"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-maxnews}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -66,13 +71,14 @@ services:
   # Redis (для BullMQ)
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    command: redis-server --appendonly yes
+    # НЕ публикуем порт наружу для безопасности
+    # ports:
+    #   - "6379:6379"
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_secret}
     volumes:
-      - redis_data:/data
+      - redis_/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_secret}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -81,12 +87,13 @@ services:
     restart: unless-stopped
 
   # Redis Commander (опционально, для просмотра Redis)
+  # Доступ только через VPN/SSH tunnel
   redis-commander:
     image: rediscommander/redis-commander:latest
     ports:
-      - "8081:8081"
+      - "127.0.0.1:8081:8081"  # Только localhost
     environment:
-      - REDIS_HOSTS=local:redis:6379
+      - REDIS_HOSTS=local:redis:6379?password=${REDIS_PASSWORD:-redis_secret}
     depends_on:
       redis:
         condition: service_healthy
@@ -96,10 +103,11 @@ services:
       - tools
 
   # Adminer (опционально, для просмотра PostgreSQL)
+  # Доступ только через VPN/SSH tunnel
   adminer:
     image: adminer:latest
     ports:
-      - "8082:8080"
+      - "127.0.0.1:8082:8080"  # Только localhost
     depends_on:
       postgres:
         condition: service_healthy
@@ -109,8 +117,8 @@ services:
       - tools
 
 volumes:
-  postgres_data:
-  redis_data:
+  postgres_
+  redis_
 
 networks:
   maxnews-network:
