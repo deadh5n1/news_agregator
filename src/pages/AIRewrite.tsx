@@ -79,23 +79,20 @@ export default function AIRewrite() {
       return;
     }
 
-    if (!currentProvider || !currentProvider.apiKey) {
-      setNotification({ 
-        type: 'error', 
-        message: `Настройте API ключ для ${currentProvider?.name || 'выбранной модели'} в настройках AI` 
-      });
-      return;
-    }
-
     setIsGenerating(true);
     setRewrittenText('');
     setGenerationProgress(0);
 
     try {
-      // В реальности здесь должен быть вызов backend API
+      // Вызов backend API для рерайта
+      // В реальности здесь должен быть вызов с авторизацией
+      // const token = localStorage.getItem('auth-token');
       // const response = await fetch('/api/ai/rewrite', {
       //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     'Authorization': `Bearer ${token}`
+      //   },
       //   body: JSON.stringify({
       //     text: originalText,
       //     provider: selectedModel,
@@ -103,10 +100,17 @@ export default function AIRewrite() {
       //     options: { temperature, maxTokens, customPrompt }
       //   })
       // });
+      // 
+      // if (!response.ok) {
+      //   const error = await response.json();
+      //   throw new Error(error.message || 'AI rewrite failed');
+      // }
+      // 
       // const data = await response.json();
       // setRewrittenText(data.rewrittenText);
 
       // ДЕМО: Имитация генерации с прогрессом
+      // Удалить этот блок когда backend будет готов
       const mockResult = generateMockResult(selected, selectedStyle);
       const words = mockResult.split(' ');
       let currentText = '';
@@ -118,7 +122,7 @@ export default function AIRewrite() {
         setGenerationProgress(Math.round((i / words.length) * 100));
       }
 
-      setNotification({ type: 'success', message: `Рерайт завершён с помощью ${currentProvider.name}` });
+      setNotification({ type: 'success', message: `Рерайт завершён с помощью ${currentProvider?.name || 'AI'}` });
     } catch (error: any) {
       setNotification({ type: 'error', message: `Ошибка: ${error.message}` });
     } finally {

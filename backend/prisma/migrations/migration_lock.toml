@@ -1,0 +1,12 @@
+{
+  "version": "5.8.0",
+  "engineType": "library",
+  "generator": {
+    "name": "prisma-client-js",
+    "provider": "prisma-client-js",
+    "output": null,
+    "config": {},
+    "binaryTargets": [],
+    "previewFeatures": []
+  }
+}
